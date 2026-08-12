@@ -304,7 +304,7 @@
 
     <section class="card">
 
-      <form id="registrationForm" novalidate>
+      <form id="registrationForm">
 
         <div class="form-grid">
 
@@ -384,26 +384,6 @@
             </span>
           </div>
 
-
-          <div class="field">
-            <label for="age">
-              Vârsta <span class="required">*</span>
-            </label>
-
-            <input
-              type="number"
-              id="age"
-              min="1"
-              max="120"
-              placeholder="Vârsta"
-              required
-            >
-
-            <span class="hint">
-              Se calculează automat.
-            </span>
-          </div>
-
         </div>
 
 
@@ -468,68 +448,6 @@
   const message =
     document.getElementById("message");
 
-  const birthDateInput =
-    document.getElementById("birthDate");
-
-  const ageInput =
-    document.getElementById("age");
-
-
-  // ==========================================
-  // AGE
-  // ==========================================
-
-  function calculateAge(birthDate) {
-
-    const today = new Date();
-
-    const birth =
-      new Date(birthDate + "T00:00:00");
-
-    let age =
-      today.getFullYear() -
-      birth.getFullYear();
-
-    const monthDifference =
-      today.getMonth() -
-      birth.getMonth();
-
-    if (
-      monthDifference < 0 ||
-      (
-        monthDifference === 0 &&
-        today.getDate() < birth.getDate()
-      )
-    ) {
-      age--;
-    }
-
-    return age;
-  }
-
-
-  birthDateInput.addEventListener(
-    "change",
-    () => {
-
-      if (!birthDateInput.value) {
-        ageInput.value = "";
-        return;
-      }
-
-      const age =
-        calculateAge(
-          birthDateInput.value
-        );
-
-      if (age >= 1 && age <= 120) {
-        ageInput.value = age;
-      } else {
-        ageInput.value = "";
-      }
-    }
-  );
-
 
   // ==========================================
   // SUBMIT
@@ -584,27 +502,9 @@
             .trim();
 
         const birthDate =
-          birthDateInput.value;
-
-        const age =
-          Number(ageInput.value);
-
-
-        const calculatedAge =
-          calculateAge(birthDate);
-
-
-        if (age !== calculatedAge) {
-
-          message.textContent =
-            "Vârsta introdusă nu corespunde datei nașterii.";
-
-          message.classList.add("error");
-
-          ageInput.focus();
-
-          return;
-        }
+          document
+            .getElementById("birthDate")
+            .value;
 
 
         // ======================================
@@ -619,8 +519,7 @@
               email: email,
               company: company,
               city: city,
-              birth_date: birthDate,
-              age: age
+              birth_date: birthDate
             });
 
 
@@ -631,6 +530,8 @@
             error
           );
 
+
+          // Duplicate email
 
           if (error.code === "23505") {
 
@@ -645,6 +546,7 @@
 
             return;
           }
+
 
           throw error;
         }
@@ -694,6 +596,10 @@
 
   const THEME_KEY = "webinarTheme";
 
+  const themeToggle =
+    document.getElementById("themeToggle");
+
+
   function applyTheme(theme) {
 
     document.body.classList.toggle(
@@ -707,9 +613,6 @@
         : "🌙 Dark mode";
   }
 
-
-  const themeToggle =
-    document.getElementById("themeToggle");
 
   const savedTheme =
     localStorage.getItem(THEME_KEY);

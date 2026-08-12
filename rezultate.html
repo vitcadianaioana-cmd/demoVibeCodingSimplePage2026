@@ -19,7 +19,6 @@
       --muted: #765f6b;
       --border: #f2bfd7;
       --danger: #dc3545;
-      --success: #198754;
       --shadow: 0 15px 40px rgba(220, 62, 140, 0.15);
     }
 
@@ -423,6 +422,41 @@
 
 
   // ==========================================
+  // CALCULATE AGE
+  // ==========================================
+
+  function calculateAge(birthDate) {
+
+    const today = new Date();
+
+    const birth =
+      new Date(
+        birthDate + "T00:00:00"
+      );
+
+    let age =
+      today.getFullYear() -
+      birth.getFullYear();
+
+    const monthDifference =
+      today.getMonth() -
+      birth.getMonth();
+
+    if (
+      monthDifference < 0 ||
+      (
+        monthDifference === 0 &&
+        today.getDate() < birth.getDate()
+      )
+    ) {
+      age--;
+    }
+
+    return age;
+  }
+
+
+  // ==========================================
   // LOAD PARTICIPANTS
   // ==========================================
 
@@ -444,7 +478,7 @@
         await supabaseClient
           .from("participants")
           .select(
-            "id, name, email, company, city, birth_date, age, registered_at"
+            "id, name, email, company, city, birth_date, registered_at"
           )
           .order(
             "registered_at",
@@ -497,6 +531,12 @@
             "participant";
 
 
+          const age =
+            calculateAge(
+              participant.birth_date
+            );
+
+
           const registeredAt =
             participant.registered_at
               ? new Date(
@@ -539,7 +579,7 @@
                 participant.city
               )}
               ·
-              ${participant.age} ani
+              ${age} ani
             </div>
 
             <div class="participant-meta">
