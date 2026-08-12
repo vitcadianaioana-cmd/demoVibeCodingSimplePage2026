@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>Webinar Registration</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root {
+      --pink: #ff4fa3;
+      --pink-dark: #e83e8c;
+      --pink-light: #ffe1f0;
+      --background: #fff4f9;
+      --card: #ffffff;
+      --text: #2b1b25;
+      --muted: #765f6b;
+      --border: #f2bfd7;
+      --input-bg: #ffffff;
+      --success: #198754;
+      --danger: #dc3545;
+      --shadow: 0 15px 40px rgba(220, 62, 140, 0.15);
+    }
+
+    body.dark {
+      --background: #1d1720;
+      --card: #29212c;
+      --text: #fff5fa;
+      --muted: #d0bdc8;
+      --border: #5e4051;
+      --input-bg: #332936;
+      --pink-light: #51273f;
+      --shadow: 0 15px 40px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont,
+        "Segoe UI", sans-serif;
+
+      background:
+        radial-gradient(
+          circle at top right,
+          rgba(255, 79, 163, 0.18),
+          transparent 30%
+        ),
+        var(--background);
+
+      color: var(--text);
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    .container {
+      width: min(100% - 32px, 960px);
+      margin: 0 auto;
+    }
+
+    header {
+      padding: 24px 0;
+    }
+
+    .header-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 800;
+    }
+
+    .brand-icon {
+      width: 38px;
+      height: 38px;
+      display: grid;
+      place-items: center;
+      border-radius: 12px;
+      background: var(--pink);
+      color: white;
+    }
+
+    .theme-toggle {
+      border: 1px solid var(--border);
+      background: var(--card);
+      color: var(--text);
+      padding: 9px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    main {
+      padding: 30px 0 70px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 32px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: var(--pink-light);
+      color: var(--pink-dark);
+      font-size: 0.8rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+    }
+
+    h1 {
+      margin: 0 0 12px;
+      font-size: clamp(2rem, 5vw, 3.2rem);
+      line-height: 1.1;
+    }
+
+    .hero p {
+      margin: 0 auto;
+      max-width: 600px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 24px;
+      padding: clamp(20px, 4vw, 40px);
+      box-shadow: var(--shadow);
+    }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 22px;
+    }
+
+    .field {
+      display: flex;
+      flex-direction: column;
+      gap: 7px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .required {
+      color: var(--pink-dark);
+    }
+
+    input {
+      width: 100%;
+      min-height: 48px;
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--input-bg);
+      color: var(--text);
+      outline: none;
+    }
+
+    input:focus {
+      border-color: var(--pink);
+      box-shadow: 0 0 0 3px rgba(255, 79, 163, 0.18);
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 0.78rem;
+    }
+
+    .form-actions {
+      margin-top: 28px;
+      display: flex;
+      justify-content: flex-end;
+    }
+
+    .submit-btn {
+      border: 0;
+      border-radius: 12px;
+      padding: 13px 24px;
+      background: var(--pink);
+      color: white;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .submit-btn:hover {
+      background: var(--pink-dark);
+    }
+
+    .submit-btn:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
+    .message {
+      margin-top: 18px;
+      padding: 13px 15px;
+      border-radius: 12px;
+      display: none;
+      font-size: 0.9rem;
+    }
+
+    .message.success {
+      display: block;
+      background: rgba(25, 135, 84, 0.12);
+      color: var(--success);
+    }
+
+    .message.error {
+      display: block;
+      background: rgba(220, 53, 69, 0.12);
+      color: var(--danger);
+    }
+
+    footer {
+      text-align: center;
+      padding: 20px;
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    @media (max-width: 650px) {
+      .container {
+        width: min(100% - 20px, 960px);
+      }
+
+      .form-grid {
+        grid-template-columns: 1fr;
+        gap: 18px;
+      }
+
+      .card {
+        border-radius: 18px;
+        padding: 20px 16px;
+      }
+
+      .form-actions {
+        justify-content: stretch;
+      }
+
+      .submit-btn {
+        width: 100%;
+        min-height: 50px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <div class="container header-inner">
+
+    <div class="brand">
+      <div class="brand-icon" aria-hidden="true">♡</div>
+      <span>Webinar Registration</span>
+    </div>
+
+    <button
+      type="button"
+      class="theme-toggle"
+      id="themeToggle"
+    >
+      🌙 Dark mode
+    </button>
+
+  </div>
+</header>
+
+
+<main>
+  <div class="container">
+
+    <section class="hero">
+      <span class="badge">WEBINAR</span>
+
+      <h1>Reserve your spot ✨</h1>
+
+      <p>
+        Completează formularul de mai jos pentru a te înscrie la webinar.
+        Toate câmpurile sunt obligatorii.
+      </p>
+    </section>
+
+
+    <section class="card">
+
+      <form id="registrationForm">
+
+        <div class="form-grid">
+
+          <div class="field">
+            <label for="name">
+              Nume <span class="required">*</span>
+            </label>
+
+            <input
+              type="text"
+              id="name"
+              placeholder="Numele complet"
+              autocomplete="name"
+              required
+            >
+          </div>
+
+
+          <div class="field">
+            <label for="email">
+              Email <span class="required">*</span>
+            </label>
+
+            <input
+              type="email"
+              id="email"
+              placeholder="email@example.com"
+              autocomplete="email"
+              required
+            >
+          </div>
+
+
+          <div class="field">
+            <label for="company">
+              Companie <span class="required">*</span>
+            </label>
+
+            <input
+              type="text"
+              id="company"
+              placeholder="Numele companiei"
+              autocomplete="organization"
+              required
+            >
+          </div>
+
+
+          <div class="field">
+            <label for="city">
+              Oraș <span class="required">*</span>
+            </label>
+
+            <input
+              type="text"
+              id="city"
+              placeholder="Orașul"
+              autocomplete="address-level2"
+              required
+            >
+          </div>
+
+
+          <div class="field">
+            <label for="birthDate">
+              Data nașterii <span class="required">*</span>
+            </label>
+
+            <input
+              type="date"
+              id="birthDate"
+              required
+            >
+
+            <span class="hint">
+              Introdu data nașterii.
+            </span>
+          </div>
+
+        </div>
+
+
+        <div class="form-actions">
+
+          <button
+            type="submit"
+            class="submit-btn"
+          >
+            Înscrie-mă la webinar
+          </button>
+
+        </div>
+
+
+        <div
+          id="message"
+          class="message"
+          role="status"
+          aria-live="polite"
+        ></div>
+
+      </form>
+
+    </section>
+
+  </div>
+</main>
+
+
+<footer>
+  Datele sunt stocate securizat.
+</footer>
+
+
+<script>
+
+  // ==========================================
+  // SUPABASE
+  // ==========================================
+
+  const SUPABASE_URL =
+    "https://csnklahuuumauwyyktej.supabase.co";
+
+  const SUPABASE_KEY =
+    "sb_publishable_eefNHLesThmfx8wN_skqHg_tcmFpf0W";
+
+  const supabaseClient =
+    window.supabase.createClient(
+      SUPABASE_URL,
+      SUPABASE_KEY
+    );
+
+
+  // ==========================================
+  // ELEMENTS
+  // ==========================================
+
+  const form =
+    document.getElementById("registrationForm");
+
+  const message =
+    document.getElementById("message");
+
+
+  // ==========================================
+  // SUBMIT
+  // ==========================================
+
+  form.addEventListener(
+    "submit",
+    async (event) => {
+
+      event.preventDefault();
+
+      message.className = "message";
+      message.textContent = "";
+
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+
+      const submitButton =
+        form.querySelector(".submit-btn");
+
+      submitButton.disabled = true;
+      submitButton.textContent = "Se trimite...";
+
+
+      try {
+
+        const name =
+          document
+            .getElementById("name")
+            .value
+            .trim();
+
+        const email =
+          document
+            .getElementById("email")
+            .value
+            .trim()
+            .toLowerCase();
+
+        const company =
+          document
+            .getElementById("company")
+            .value
+            .trim();
+
+        const city =
+          document
+            .getElementById("city")
+            .value
+            .trim();
+
+        const birthDate =
+          document
+            .getElementById("birthDate")
+            .value;
+
+
+        // ======================================
+        // INSERT IN SUPABASE
+        // ======================================
+
+        const { error } =
+          await supabaseClient
+            .from("participants")
+            .insert({
+              name: name,
+              email: email,
+              company: company,
+              city: city,
+              birth_date: birthDate
+            });
+
+
+        if (error) {
+
+          console.error(
+            "Supabase error:",
+            error
+          );
+
+
+          // Duplicate email
+
+          if (error.code === "23505") {
+
+            message.textContent =
+              "Există deja o înscriere cu această adresă de email.";
+
+            message.classList.add("error");
+
+            document
+              .getElementById("email")
+              .focus();
+
+            return;
+          }
+
+
+          throw error;
+        }
+
+
+        // ======================================
+        // SUCCESS
+        // ======================================
+
+        form.reset();
+
+        message.textContent =
+          "Înscrierea a fost realizată cu succes! 💗";
+
+        message.classList.add("success");
+
+
+      } catch (error) {
+
+        console.error(
+          "Registration failed:",
+          error
+        );
+
+        message.textContent =
+          "Ne pare rău, întâmpinăm probleme tehnice. " +
+          "Te rugăm să încerci din nou mai târziu.";
+
+        message.classList.add("error");
+
+
+      } finally {
+
+        submitButton.disabled = false;
+        submitButton.textContent =
+          "Înscrie-mă la webinar";
+
+      }
+
+    }
+  );
+
+
+  // ==========================================
+  // DARK MODE
+  // ==========================================
+
+  const THEME_KEY = "webinarTheme";
+
+  const themeToggle =
+    document.getElementById("themeToggle");
+
+
+  function applyTheme(theme) {
+
+    document.body.classList.toggle(
+      "dark",
+      theme === "dark"
+    );
+
+    themeToggle.textContent =
+      theme === "dark"
+        ? "☀️ Light mode"
+        : "🌙 Dark mode";
+  }
+
+
+  const savedTheme =
+    localStorage.getItem(THEME_KEY);
+
+
+  if (savedTheme) {
+
+    applyTheme(savedTheme);
+
+  } else if (
+    window.matchMedia(
+      "(prefers-color-scheme: dark)"
+    ).matches
+  ) {
+
+    applyTheme("dark");
+
+  }
+
+
+  themeToggle.addEventListener(
+    "click",
+    () => {
+
+      const newTheme =
+        document.body.classList.contains("dark")
+          ? "light"
+          : "dark";
+
+      applyTheme(newTheme);
+
+      localStorage.setItem(
+        THEME_KEY,
+        newTheme
+      );
+
+    }
+  );
+
+</script>
+
+</body>
+</html>
